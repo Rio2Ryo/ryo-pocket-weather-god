@@ -69,7 +69,14 @@ export default function App() {
   }) as React.CSSProperties, [state]);
 
   const act = (action: UserAction) => dispatch({ type: 'act', action: { ...action, atTick: state.tick } });
-  const copyShare = async () => { const url = shareUrl(state, location.origin); await navigator.clipboard?.writeText(url).catch(() => undefined); setNotice(`share URL: ${url}`); };
+  const copyShare = () => {
+    const url = shareUrl(state, location.origin);
+    void Promise.race([
+      navigator.clipboard?.writeText(url) ?? Promise.resolve(),
+      new Promise((resolve) => window.setTimeout(resolve, 350)),
+    ]).catch(() => undefined);
+    setNotice(`exact replay URL ready (${url.length} chars): ${url.slice(0, 120)}…`);
+  };
   const doExport = () => { const out = exportState(state); setJson(out); setNotice('JSON export printed into the import/export dock'); };
   const doImport = () => { try { dispatch({ type: 'import', json }); setNotice('imported; the village is now replaying that weather memory'); } catch (e) { setNotice(e instanceof Error ? e.message : 'import failed'); } };
 
